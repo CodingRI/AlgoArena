@@ -1,4 +1,4 @@
-# 🚀 LeetCode Collab — Chrome Extension
+# AlgoArena— Chrome Extension
 
 > Figma + Discord + Excalidraw for LeetCode collaboration
 
@@ -6,34 +6,8 @@ A futuristic, galaxy-themed collaborative Chrome Extension that injects a floati
 
 ---
 
-## 🗂 Folder Structure
 
-```
-src/
-├── components/
-│   ├── ui/           # Shared UI: MemberAvatar, NotificationBadge, VoiceIndicator, etc.
-│   ├── chat/         # ChatPanel, ChatMessage, ChatInput
-│   ├── room/         # RoomHeader, RoomPanel, JoinRequestCard, RaiseHandButton
-│   ├── members/      # MemberSidebar
-│   ├── voice/        # (placeholder for voice controls)
-│   └── settings/     # SettingsModal
-├── draggable/        # FloatingPanel — main draggable container
-├── overlays/         # ExplanationOverlay, ExcalidrawPlaceholder
-├── store/            # Zustand stores (room, chat, panel, voice, explanation)
-├── websockets/       # Socket service + event handlers
-├── hooks/            # useDraggable, useSocket, useTypingIndicator, useAutoScroll
-├── types/            # All TypeScript interfaces
-├── constants/        # Socket events, languages, avatars, panel sizes
-├── mock/             # Mock data for dev/demo
-├── services/         # API service placeholders
-├── utils/            # Formatting, helpers
-├── extension/        # Chrome Extension: content.ts, background.ts
-└── styles/           # globals.css
-```
-
----
-
-## 🛠 Tech Stack
+## Tech Stack
 
 | Tool | Purpose |
 |------|---------|
@@ -48,7 +22,7 @@ src/
 
 ---
 
-## ⚡ Quick Start (Dev Preview)
+## Quick Start (Dev Preview)
 
 ```bash
 # 1. Install dependencies
@@ -65,7 +39,7 @@ You can test all features: chat, rooms, members, settings, explanation mode.
 
 ---
 
-## 🔨 Build Chrome Extension
+## Build Chrome Extension
 
 ```bash
 # Build extension bundle
@@ -83,7 +57,7 @@ npm run build:extension
 
 ---
 
-## 🎮 Features to Test in Dev Preview
+## Features to Test in Dev Preview
 
 | Feature | How to test |
 |---------|-------------|
@@ -100,57 +74,12 @@ npm run build:extension
 
 ---
 
-## 🔌 Backend Integration Points
+## Backend Integration Points
 
-When you're ready to add a real backend:
+To be updated...
 
-### 1. WebSocket URL
-```ts
-// src/constants/index.ts
-export const WS_CONFIG = {
-  BASE_URL: 'ws://your-backend.com', // ← Change this
-  ...
-}
-```
 
-### 2. API Endpoints
-```ts
-// src/services/roomService.ts
-// Uncomment the fetch() calls and replace the placeholder returns
-```
-
-### 3. Socket Event Handlers
-```ts
-// src/websockets/eventHandlers.ts
-// Wire handlers to Zustand store actions
-```
-
----
-
-## 📦 Extension Architecture
-
-```
-Chrome Extension (MV3)
-├── content.ts     → Injects React app into LeetCode pages via Shadow DOM
-├── background.ts  → Service worker for badge updates & tab messaging
-└── manifest.json  → Permissions for leetcode.com domains
-```
-
-The Shadow DOM strategy prevents style conflicts with LeetCode's own CSS.
-
----
-
-## 🧩 Adding Backend (When Ready)
-
-1. Start a WebSocket server (e.g. Bun + ws, Node + Socket.IO)
-2. Update `WS_CONFIG.BASE_URL` in `constants/index.ts`
-3. Uncomment real API calls in `services/roomService.ts`
-4. Wire `eventHandlers.ts` to store actions
-5. The UI is fully ready — no changes needed
-
----
-
-## 🎨 Design System
+## Design System
 
 **Colors:** Galaxy dark (`#03020a` → `#1e1660`) + Nebula accents (violet, blue, cyan)  
 **Fonts:** Space Grotesk (display) + DM Sans (body) + JetBrains Mono (code)  
