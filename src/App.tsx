@@ -52,7 +52,7 @@ const DevPreviewBackground = () => (
     {/* Watermark */}
     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center">
       <p className="text-zinc-700 text-xs font-mono">
-        LeetCode Collab — Dev Preview Mode
+        AlgoArena — Dev Preview Mode
       </p>
       <p className="text-zinc-800 text-[10px] font-mono mt-0.5">
         In production, this panel injects into leetcode.com via Chrome Extension
