@@ -1,18 +1,15 @@
 /**
- * Background Service Worker — LeetCode Collab
+ * Background Service Worker — AlgoArena
  *
  * Handles:
  * - Extension lifecycle events
- * - Tab management
- * - Cross-tab messaging (placeholder)
+ * - Toolbar icon click → toggle panel
  * - Badge updates
  */
 
-// Installation
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('[LeetCode Collab] Extension installed');
+  console.log('[AlgoArena] Extension installed');
 
-  // Set default storage
   chrome.storage.local.set({
     settings: {
       muteNotifications: false,
@@ -25,16 +22,13 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-// Toolbar icon click — toggle panel on active tab
 chrome.action.onClicked.addListener((tab) => {
   if (!tab.id) return;
   chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_PANEL' }).catch(() => {
-    // Content script not loaded (not a LeetCode page)
-    console.warn('[LeetCode Collab] Panel not available on this page');
+    console.warn('[AlgoArena] Panel not available on this page');
   });
 });
 
-// Update badge count (called from content script via messaging)
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'UPDATE_BADGE') {
     const count = message.count ?? 0;
@@ -48,9 +42,5 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     sendResponse({ success: true });
   }
 });
-
-// PLACEHOLDER: WebSocket relay logic would go here
-// In production, the background worker maintains the WS connection
-// and relays messages to active tabs for persistence across navigation
 
 export {};

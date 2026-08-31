@@ -5,6 +5,7 @@ import ExcalidrawCanvas from './ExcalidrawCanvas';
 import { useScrollSync } from '@/hooks/useScrollSync';
 import { useExplanationStore } from '@/store/voiceStore';
 import { useRoomStore } from '@/store/roomStore';
+import { EXTENSION_MOUNT_ID } from '@/constants';
 
 const PresenterBadge = ({ name }: { name: string }) => (
   <motion.div
@@ -30,7 +31,7 @@ interface Props {
 function scrollableElementAtPoint(x: number, y: number): HTMLElement | null {
   const elements = document.elementsFromPoint(x, y);
   for (const element of elements) {
-    if (element.id === 'leetcode-collab-root') continue;
+    if (element.id === EXTENSION_MOUNT_ID) continue;
     let current: HTMLElement | null =
       element instanceof HTMLElement ? element : element.parentElement;
     while (current && current !== document.body) {

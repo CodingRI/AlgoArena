@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useDraggable } from '@/hooks';
 import { usePanelStore } from '@/store/panelStore';
 import { useRoomStore } from '@/store/roomStore';
@@ -12,6 +12,7 @@ import MemberSidebar from '@/components/members/MemberSidebar';
 import RoomPanel from '@/components/room/RoomPanel';
 import SettingsModal from '@/components/settings/SettingsModal';
 import GalaxyBackground from '@/components/ui/GalaxyBackground';
+import { TOGGLE_PANEL_EVENT } from '@/constants';
 
 const COLLAPSED_H = 52;
 const EXPANDED_W = 360;
@@ -28,8 +29,8 @@ const FloatingPanel = () => {
 
   useEffect(() => {
     const handleToggle = () => togglePanel();
-    window.addEventListener('leetcode-collab:toggle', handleToggle);
-    return () => window.removeEventListener('leetcode-collab:toggle', handleToggle);
+    window.addEventListener(TOGGLE_PANEL_EVENT, handleToggle);
+    return () => window.removeEventListener(TOGGLE_PANEL_EVENT, handleToggle);
   }, [togglePanel]);
 
   useEffect(() => {
@@ -75,11 +76,7 @@ const FloatingPanel = () => {
             <CollapsedBar onDragStart={onMouseDown} isDragging={isDragging} />
           </div>
         ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex flex-col w-full h-full relative z-10"
-          >
+          <div className="flex flex-col w-full h-full relative z-10">
             {/* Draggable header */}
             <div
               onMouseDown={onMouseDown}
@@ -90,25 +87,21 @@ const FloatingPanel = () => {
               <TabBar />
             </div>
 
-            {/* Content area */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={effectiveTab}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.15 }}
-                className="flex flex-col flex-1 min-h-0"
-              >
-                {effectiveTab === 'chat' && <ChatPanel />}
-                {effectiveTab === 'members' && <MemberSidebar />}
-                {effectiveTab === 'room' && <RoomPanel />}
-              </motion.div>
-            </AnimatePresence>
+            {/* Tab body. Do not wrap in AnimatePresence mode="wait": in the
+                extension Shadow DOM the exit animation often never finishes,
+                so chat/room stay blank until a full page refresh. */}
+            <div
+              className="flex flex-col flex-1 min-h-0 relative z-10"
+              style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}
+            >
+              {effectiveTab === 'chat' && <ChatPanel />}
+              {effectiveTab === 'members' && <MemberSidebar />}
+              {effectiveTab === 'room' && <RoomPanel />}
+            </div>
 
             {/* Settings sheet */}
             <SettingsModal />
-          </motion.div>
+          </div>
         )}
       </div>
     </motion.div>
