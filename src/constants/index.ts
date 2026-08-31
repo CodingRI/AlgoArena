@@ -118,6 +118,11 @@ export const CHAT_MAX_PER_WINDOW = 5;
 export const CHAT_WINDOW_MS = 5000;
 export const CHAT_MAX_CONTENT = 4000;
 
+// ─── EXTENSION ───────────────────────────────────────────────────────────────
+
+export const EXTENSION_MOUNT_ID = 'algoarena-root';
+export const TOGGLE_PANEL_EVENT = 'algoarena:toggle';
+
 // ─── PANEL CONSTANTS ─────────────────────────────────────────────────────────
 
 export const PANEL_COLLAPSED_WIDTH = 280;

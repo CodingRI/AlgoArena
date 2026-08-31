@@ -73,7 +73,7 @@ export function registerSocketHandlers(): () => void {
   });
 
   on<{ requestId: string }>('join_request:rejected', ({ requestId }) => {
-    console.warn('[WS] Join request rejected:', requestId);
+    console.log('[WS] Join request rejected:', requestId);
     useRoomStore.getState().handleJoinRejected();
   });
 

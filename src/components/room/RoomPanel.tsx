@@ -295,19 +295,19 @@ const RoomPanel = () => {
     pruneKnownRooms();
   }, [pruneKnownRooms]);
 
-  // Return to home when idle and not in a room. Stay on join while pending/rejected.
+  // Stay on Create/Join while filling the form (view is local, not a dep).
+  // Jump home once a room exists, or after leaving back to idle.
   useEffect(() => {
-    if (!currentRoom && joinRequestStatus === 'idle') {
+    if (currentRoom) {
+      setView('home');
+      setConfirmDelete(false);
+      return;
+    }
+    if (joinRequestStatus === 'idle') {
       setView('home');
       setConfirmDelete(false);
     }
   }, [currentRoom, joinRequestStatus]);
-
-  useEffect(() => {
-    if (joinRequestStatus === 'accepted' && view === 'join') {
-      setView('home');
-    }
-  }, [joinRequestStatus, view]);
 
   const handleRejoin = async (room: KnownRoom) => {
     setRejoiningId(room.roomId);
@@ -331,7 +331,7 @@ const RoomPanel = () => {
         ))}
       </AnimatePresence>
 
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {view === 'home' && (
           <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="px-2 space-y-2">

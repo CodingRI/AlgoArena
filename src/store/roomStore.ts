@@ -126,7 +126,7 @@ export const useRoomStore = create<RoomStore>((set, get) => ({
     socketHandlerCleanup = registerSocketHandlers();
     socketService.connect(room.id, userId);
 
-    usePanelStore.getState().setActiveTab('members');
+    usePanelStore.getState().setActiveTab('chat');
 
     return room;
   },
@@ -240,6 +240,7 @@ export const useRoomStore = create<RoomStore>((set, get) => ({
   setJoinRequestStatus: (status) => set({ joinRequestStatus: status }),
 
   handleJoinRejected: () => {
+    if (get().joinRequestStatus !== 'pending') return;
     socketService.disconnect();
     if (socketHandlerCleanup) {
       socketHandlerCleanup();

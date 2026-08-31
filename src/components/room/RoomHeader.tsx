@@ -47,16 +47,8 @@ const RoomHeader = () => {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-semibold text-white truncate font-display">
-            {currentRoom?.name ?? 'Algo Arena'}
+            {currentRoom?.name ?? 'AlgoArena'}
           </span>
-          {langConfig && (
-            <span
-              className="text-[9px] px-1 py-0.5 rounded font-mono flex-shrink-0"
-              style={{ background: `${langConfig.color}22`, color: langConfig.color }}
-            >
-              {langConfig.label}
-            </span>
-          )}
         </div>
         <div className="flex items-center gap-2">
           <SocketStatus status={wsStatus} showLabel />
