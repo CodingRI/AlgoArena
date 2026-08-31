@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AlgoArena — Privacy Policy</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #03020a;
+      --panel: #07051a;
+      --text: #e4e4e7;
+      --muted: #a1a1aa;
+      --accent: #8b5cf6;
+      --accent-2: #7c3aed;
+      --border: rgba(139, 92, 246, 0.2);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(1200px 500px at 10% -10%, rgba(139, 92, 246, 0.18), transparent 60%),
+        radial-gradient(800px 400px at 100% 0%, rgba(67, 56, 202, 0.16), transparent 55%),
+        var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      line-height: 1.65;
+    }
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+    .mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #8b5cf6, #4338ca);
+      color: #fff;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      font-size: 14px;
+    }
+    h1 {
+      margin: 16px 0 8px;
+      font-size: 1.8rem;
+      letter-spacing: -0.03em;
+    }
+    .updated { color: var(--muted); font-size: 0.9rem; margin-bottom: 32px; }
+    h2 {
+      margin-top: 28px;
+      font-size: 1.1rem;
+      color: #ddd6fe;
+    }
+    p, li { color: var(--muted); }
+    a { color: #c4b5fd; }
+    ul { padding-left: 1.2rem; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 28px 8px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="mark" aria-hidden="true">AA</div>
+    <h1>AlgoArena Privacy Policy</h1>
+    <p class="updated">Last updated: August 31, 2026</p>
+    <div class="card">
+      <p>
+        AlgoArena is a Chrome extension that adds a collaborative panel on
+        <a href="https://leetcode.com">leetcode.com</a> so people in a room can
+        chat, talk, and share a drawing while solving a problem. This page
+        describes what data the extension handles.
+      </p>
+
+      <h2>Who we are</h2>
+      <p>
+        AlgoArena is an open-source project:
+        <a href="https://github.com/CodingRI/AlgoArena">github.com/CodingRI/AlgoArena</a>.
+        Questions: open a
+        <a href="https://github.com/CodingRI/AlgoArena/issues">GitHub issue</a>.
+      </p>
+
+      <h2>What we collect</h2>
+      <p>The extension and its backend process only what is needed to run a room:</p>
+      <ul>
+        <li><strong>Display name</strong> you choose in the panel (default: “Anonymous”).</li>
+        <li><strong>Generated user id</strong> stored in your browser so you can rejoin a room.</li>
+        <li><strong>Room data</strong> — room name, language, membership, join requests.</li>
+        <li><strong>Chat messages</strong> sent while you are in a room.</li>
+        <li><strong>Shared canvas / laser-pointer data</strong> during explanation mode.</li>
+        <li><strong>Voice</strong> — microphone audio only while you turn voice on. Audio is sent peer-to-peer (WebRTC). Signaling (who is in the call) goes through our server. We use public STUN servers at <code>stun.l.google.com</code> so browsers can connect.</li>
+        <li><strong>Settings</strong> such as notification and appearance toggles, stored locally in your browser.</li>
+      </ul>
+      <p>
+        We do not create accounts, do not require email, and do not use analytics,
+        advertising, or tracking pixels.
+      </p>
+
+      <h2>Where data goes</h2>
+      <p>
+        Collaboration traffic is sent to our backend at
+        <code>algoarena-rc9v.onrender.com</code> over HTTPS and WSS.
+        Rooms are stored <strong>in memory only</strong> on that server. They
+        disappear if the process restarts, redeploys, or sleeps. Chat, canvas,
+        and room membership are not written to a database.
+      </p>
+      <p>
+        The extension injects a panel into LeetCode pages. It does not scrape
+        problem statements, solutions, or your editor code to send to our server.
+      </p>
+
+      <h2>What stays on your device</h2>
+      <p>
+        Display name, user id, last room id, known rooms, and settings are saved
+        in <code>localStorage</code> and/or <code>chrome.storage.local</code> on
+        your computer. Uninstalling the extension removes that data.
+      </p>
+
+      <h2>Permissions</h2>
+      <ul>
+        <li><code>storage</code> — save settings locally.</li>
+        <li>Host access to <code>leetcode.com</code> / <code>leetcode.cn</code> — show the panel on those sites.</li>
+        <li>Host access to <code>algoarena-rc9v.onrender.com</code> — REST API and WebSocket.</li>
+      </ul>
+      <p>
+        The microphone is requested by the browser only when you enable voice,
+        and only for the LeetCode tab you are on.
+      </p>
+
+      <h2>Sharing and selling</h2>
+      <p>
+        We do not sell personal data. We do not share it with advertisers.
+        Other people in the same room can see your display name, chat, canvas
+        strokes, and hear you if you unmute.
+      </p>
+
+      <h2>How to delete your data</h2>
+      <ul>
+        <li>Leave the room from the panel header.</li>
+        <li>The room host can close the room, which drops it from the server.</li>
+        <li>Uninstall AlgoArena to clear local settings and ids.</li>
+      </ul>
+
+      <h2>Children</h2>
+      <p>AlgoArena is not directed at children under 13.</p>
+
+      <h2>Changes</h2>
+      <p>
+        If this policy changes in a material way, we will update the date at the
+        top of this page.
+      </p>
+    </div>
+  </main>
+</body>
+</html>
