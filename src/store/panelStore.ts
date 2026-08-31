@@ -2,6 +2,27 @@ import { create } from 'zustand';
 import type { ActiveTab, AppSettings, PanelState } from '@/types';
 import { DEFAULT_PANEL_POSITION } from '@/constants';
 
+const LS_SETTINGS = 'algo-arena-settings';
+
+const defaultSettings: AppSettings = {
+  muteNotifications: false,
+  muteChatSounds: false,
+  showGalaxyParticles: true,
+  compactMode: false,
+  themeIntensity: 'medium',
+  panelPosition: DEFAULT_PANEL_POSITION,
+};
+
+function loadSettings(): AppSettings {
+  try {
+    const raw = localStorage.getItem(LS_SETTINGS);
+    if (!raw) return defaultSettings;
+    return { ...defaultSettings, ...(JSON.parse(raw) as Partial<AppSettings>) };
+  } catch {
+    return defaultSettings;
+  }
+}
+
 interface PanelStore {
   panelState: PanelState;
   activeTab: ActiveTab;
@@ -31,7 +52,7 @@ interface SettingsStore {
 
 export const usePanelStore = create<PanelStore>((set) => ({
   panelState: 'expanded',
-  activeTab: 'chat',
+  activeTab: 'room',
   position: DEFAULT_PANEL_POSITION,
   showSettings: false,
   showCreateRoom: false,
@@ -53,17 +74,14 @@ export const usePanelStore = create<PanelStore>((set) => ({
 }));
 
 export const useSettingsStore = create<SettingsStore>((set) => ({
-  settings: {
-    muteNotifications: false,
-    muteChatSounds: false,
-    showGalaxyParticles: true,
-    compactMode: false,
-    themeIntensity: 'medium',
-    panelPosition: DEFAULT_PANEL_POSITION,
-  },
+  settings: loadSettings(),
 
   updateSettings: (updates) =>
-    set((state) => ({ settings: { ...state.settings, ...updates } })),
+    set((state) => {
+      const settings = { ...state.settings, ...updates };
+      localStorage.setItem(LS_SETTINGS, JSON.stringify(settings));
+      return { settings };
+    }),
 
   resetPosition: () =>
     set((state) => ({
