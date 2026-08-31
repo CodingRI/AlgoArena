@@ -1,10 +1,10 @@
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Radio, Eye, EyeOff, Pointer } from 'lucide-react';
-import ExcalidrawPlaceholder from './ExcalidrawPlaceholder';
-import MemberAvatar from '@/components/ui/MemberAvatar';
+import { X, Radio, MousePointer2, Pencil, Eye } from 'lucide-react';
+import ExcalidrawCanvas from './ExcalidrawCanvas';
+import { useScrollSync } from '@/hooks/useScrollSync';
 import { useExplanationStore } from '@/store/voiceStore';
 import { useRoomStore } from '@/store/roomStore';
-import { AVATARS } from '@/constants';
 
 const PresenterBadge = ({ name }: { name: string }) => (
   <motion.div
@@ -23,114 +23,160 @@ const PresenterBadge = ({ name }: { name: string }) => (
   </motion.div>
 );
 
-const FollowPresenterToggle = () => {
-  const { isFollowingPresenter, toggleFollowPresenter } = useExplanationStore();
-
-  return (
-    <motion.button
-      whileTap={{ scale: 0.93 }}
-      onClick={toggleFollowPresenter}
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all
-        ${isFollowingPresenter
-          ? 'bg-cyan-500/20 border border-cyan-500/30 text-cyan-300'
-          : 'bg-white/5 border border-white/10 text-zinc-400 hover:text-zinc-200'
-        }`}
-    >
-      {isFollowingPresenter ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-      {isFollowingPresenter ? 'Following' : 'Follow Presenter'}
-    </motion.button>
-  );
-};
-
-const MiniParticipants = () => {
-  const { currentRoom } = useRoomStore();
-  const members = currentRoom?.members.slice(0, 5) ?? [];
-
-  return (
-    <div className="flex items-center gap-1">
-      {members.map((m, i) => (
-        <motion.div
-          key={m.id}
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: i * 0.05 }}
-          style={{ marginLeft: i > 0 ? -8 : 0 }}
-        >
-          <MemberAvatar avatar={m.avatar} name={m.name} size="xs" showStatus={false} />
-        </motion.div>
-      ))}
-      {(currentRoom?.members.length ?? 0) > 5 && (
-        <span className="text-[10px] text-zinc-500 ml-1 font-mono">
-          +{(currentRoom?.members.length ?? 0) - 5}
-        </span>
-      )}
-    </div>
-  );
-};
-
 interface Props {
   isOpen: boolean;
 }
 
+function scrollableElementAtPoint(x: number, y: number): HTMLElement | null {
+  const elements = document.elementsFromPoint(x, y);
+  for (const element of elements) {
+    if (element.id === 'leetcode-collab-root') continue;
+    let current: HTMLElement | null =
+      element instanceof HTMLElement ? element : element.parentElement;
+    while (current && current !== document.body) {
+      const style = window.getComputedStyle(current);
+      const canScrollY =
+        /(auto|scroll|overlay)/.test(style.overflowY) &&
+        current.scrollHeight > current.clientHeight;
+      const canScrollX =
+        /(auto|scroll|overlay)/.test(style.overflowX) &&
+        current.scrollWidth > current.clientWidth;
+      if (canScrollY || canScrollX) return current;
+      current = current.parentElement;
+    }
+  }
+  return document.scrollingElement as HTMLElement | null;
+}
+
 const ExplanationOverlay = ({ isOpen }: Props) => {
-  const { session, endSession, myRole } = useExplanationStore();
+  const { session, requestEndSession, myRole } = useExplanationStore();
   const { currentRoom } = useRoomStore();
+  const [interactionMode, setInteractionMode] = useState<'draw' | 'page'>('page');
+  const [drawingsVisible, setDrawingsVisible] = useState(true);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const presenter = currentRoom?.members.find((m) => m.id === session?.presenterId);
   const presenterName = presenter?.name ?? 'Unknown';
+  const isPresenter = myRole === 'presenter';
+  const isDrawing = isPresenter && interactionMode === 'draw';
+
+  useScrollSync(isOpen, isPresenter);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setInteractionMode('page');
+      setDrawingsVisible(true);
+    }
+  }, [isOpen]);
+
+  // Excalidraw consumes wheel events while drawing. Forward ordinary wheel
+  // gestures to the LeetCode pane under the pointer, while preserving
+  // Ctrl/Cmd+wheel for Excalidraw zoom.
+  useEffect(() => {
+    const overlay = overlayRef.current;
+    if (!overlay || !isDrawing) return;
+
+    const handleWheel = (event: WheelEvent) => {
+      if (event.ctrlKey || event.metaKey) return;
+      const target = scrollableElementAtPoint(event.clientX, event.clientY);
+      if (!target) return;
+
+      const unit =
+        event.deltaMode === WheelEvent.DOM_DELTA_LINE
+          ? 16
+          : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+            ? window.innerHeight
+            : 1;
+      event.preventDefault();
+      event.stopPropagation();
+      target.scrollBy({
+        left: event.deltaX * unit,
+        top: event.deltaY * unit,
+      });
+    };
+
+    overlay.addEventListener('wheel', handleWheel, { capture: true, passive: false });
+    return () => overlay.removeEventListener('wheel', handleWheel, true);
+  }, [isDrawing]);
+
+  const handleExit = () => {
+    if (myRole === 'presenter') {
+      if (currentRoom) requestEndSession(currentRoom.id);
+    } else {
+      // Followers hide drawings locally; session continues for others
+      setDrawingsVisible(false);
+    }
+  };
 
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          ref={overlayRef}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[9999] flex flex-col"
-          style={{ background: 'rgba(3, 2, 10, 0.92)', backdropFilter: 'blur(4px)' }}
+          className="explanation-overlay fixed inset-0 z-[9999] pointer-events-none"
+          style={{ background: 'transparent' }}
         >
-          {/* Top bar */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 flex-shrink-0">
-            <PresenterBadge name={presenterName} />
+          {drawingsVisible ? (
+            <>
+              {/* Full-viewport transparent drawing layer */}
+              <ExcalidrawCanvas
+                isPresenter={isPresenter}
+                isInteractive={isDrawing}
+                initialElementsJson={session?.canvasData ?? null}
+                presenterName={presenterName}
+              />
 
-            <div className="flex items-center gap-2">
-              <MiniParticipants />
-
-              {myRole === 'follower' && <FollowPresenterToggle />}
-
-              {myRole === 'presenter' && (
-                <motion.div whileTap={{ scale: 0.95 }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-500/20 border border-violet-500/30 text-xs text-violet-300">
-                  <Pointer className="w-3.5 h-3.5" />
-                  Laser Pointer
-                </motion.div>
-              )}
-
+              <div className="explanation-session-controls pointer-events-auto absolute top-4 left-4">
+                <PresenterBadge name={presenterName} />
+              </div>
+              <div className="explanation-session-controls pointer-events-auto absolute top-4 right-4 flex items-center gap-2">
+                {isPresenter && (
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setInteractionMode(isDrawing ? 'page' : 'draw')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs transition-colors shadow-xl backdrop-blur-md
+                      ${isDrawing
+                        ? 'bg-cyan-500/20 border-cyan-400/35 text-cyan-200 hover:bg-cyan-500/30'
+                        : 'bg-violet-500/25 border-violet-400/40 text-violet-100 hover:bg-violet-500/35'
+                      }`}
+                    title={isDrawing ? 'Pass clicks and scrolling through to LeetCode' : 'Return to drawing'}
+                  >
+                    {isDrawing
+                      ? <MousePointer2 className="w-3.5 h-3.5" />
+                      : <Pencil className="w-3.5 h-3.5" />}
+                    {isDrawing ? 'Use LeetCode page' : 'Draw on page'}
+                  </motion.button>
+                )}
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={handleExit}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-950/85 border border-red-500/25
+                    text-xs text-red-400 hover:bg-red-500/20 transition-colors shadow-xl backdrop-blur-md"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  {isPresenter ? 'End Session' : 'Hide drawings'}
+                </motion.button>
+              </div>
+            </>
+          ) : (
+            /* Drawings are hidden — show a small pill to restore them */
+            <div className="pointer-events-auto absolute top-4 right-4">
               <motion.button
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
                 whileTap={{ scale: 0.9 }}
-                onClick={endSession}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/15 border border-red-500/20
-                  text-xs text-red-400 hover:bg-red-500/25 transition-colors"
+                onClick={() => setDrawingsVisible(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full
+                  bg-violet-500/25 border border-violet-400/40 text-violet-100 text-xs
+                  hover:bg-violet-500/35 transition-colors shadow-xl backdrop-blur-md"
               >
-                <X className="w-3.5 h-3.5" />
-                Exit
+                <Eye className="w-3.5 h-3.5" />
+                Show drawings
               </motion.button>
             </div>
-          </div>
-
-          {/* Canvas area */}
-          <div className="flex-1 min-h-0">
-            <ExcalidrawPlaceholder />
-          </div>
-
-          {/* Bottom status */}
-          <div className="flex items-center justify-between px-4 py-2 border-t border-white/5 flex-shrink-0">
-            <span className="text-[10px] text-zinc-600 font-mono">
-              Explanation Mode — {myRole === 'presenter' ? 'You are presenting' : `Following ${presenterName}`}
-            </span>
-            <span className="text-[10px] text-zinc-700 font-mono">
-              canvas sync • scroll sync • tab sync
-            </span>
-          </div>
+          )}
         </motion.div>
       )}
     </AnimatePresence>
