@@ -72,16 +72,53 @@ export const useSocket = () => {
 
 export const useTypingIndicator = (onTyping: () => void, onStop: () => void, delay = 1500) => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTypingRef = useRef(false);
+  const lastEmitRef = useRef(0);
+  const onTypingRef = useRef(onTyping);
+  const onStopRef = useRef(onStop);
+  onTypingRef.current = onTyping;
+  onStopRef.current = onStop;
 
-  const handleKeyPress = useCallback(() => {
-    onTyping();
+  const stopImmediately = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    if (isTypingRef.current) {
+      isTypingRef.current = false;
+      onStopRef.current();
+    }
+  }, []);
+
+  const onInput = useCallback(() => {
+    const now = Date.now();
+    // Emit immediately on first keystroke, then heartbeat every 2s so receivers
+    // don't expire a long continuous typing burst.
+    if (!isTypingRef.current || now - lastEmitRef.current > 2000) {
+      isTypingRef.current = true;
+      lastEmitRef.current = now;
+      onTypingRef.current();
+    }
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(onStop, delay);
-  }, [onTyping, onStop, delay]);
+    timerRef.current = setTimeout(() => {
+      isTypingRef.current = false;
+      timerRef.current = null;
+      onStopRef.current();
+    }, delay);
+  }, [delay]);
 
-  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (isTypingRef.current) {
+        isTypingRef.current = false;
+        onStopRef.current();
+      }
+    },
+    []
+  );
 
-  return handleKeyPress;
+  return { onInput, stopImmediately };
 };
 
 // ─── useClickOutside ─────────────────────────────────────────────────────────
