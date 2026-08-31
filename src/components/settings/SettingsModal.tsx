@@ -64,7 +64,7 @@ const SettingsModal = () => {
             {/* Options */}
             <div className="space-y-3">
               {[
-                { key: 'muteNotifications' as const, label: 'Mute Notifications', desc: 'No popup alerts' },
+                { key: 'muteNotifications' as const, label: 'Focus Mode', desc: 'No chat alerts while you work (join & hand-raise still notify)' },
                 { key: 'muteChatSounds' as const, label: 'Mute Chat Sounds', desc: 'Silent message arrival' },
                 { key: 'showGalaxyParticles' as const, label: 'Galaxy Particles', desc: 'Animated star background' },
                 { key: 'compactMode' as const, label: 'Compact Mode', desc: 'Reduced padding & sizes' },
