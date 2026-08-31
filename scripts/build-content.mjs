@@ -1,40 +1,81 @@
 
 import { build } from 'esbuild';
-import { copyFile, mkdir } from 'fs/promises';
+import { copyFile, mkdir, readFile } from 'fs/promises';
+import { existsSync } from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, '..');
 
+const PROD_API_BASE = 'https://algoarena-rc9v.onrender.com/api';
+const PROD_WS_URL = 'wss://algoarena-rc9v.onrender.com/ws';
+
+function parseEnvFile(contents) {
+  const out = {};
+  for (const line of contents.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eq = trimmed.indexOf('=');
+    if (eq < 0) continue;
+    const key = trimmed.slice(0, eq).trim();
+    let value = trimmed.slice(eq + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    out[key] = value;
+  }
+  return out;
+}
+
+async function loadEnv(fileName) {
+  const filePath = resolve(root, fileName);
+  if (!existsSync(filePath)) return {};
+  return parseEnvFile(await readFile(filePath, 'utf8'));
+}
+
+const env = {
+  ...(await loadEnv('.env')),
+  ...(await loadEnv('.env.extension')),
+};
+
+const apiBase = env.VITE_API_BASE || PROD_API_BASE;
+const wsUrl = env.VITE_WS_URL || PROD_WS_URL;
+
 console.log('Building content.js (IIFE) …');
+console.log(`  API_BASE=${apiBase}`);
+console.log(`  WS_URL=${wsUrl}`);
 
 await build({
   entryPoints: [resolve(root, 'src/extension/content.ts')],
   bundle: true,
   format: 'iife',          // no import/export — required for content scripts
-  globalName: '_lc',       // IIFE wrapper name (unused, but required by esbuild)
+  globalName: '_aa',
   outfile: resolve(root, 'dist/content.js'),
   minify: true,
   sourcemap: false,
 
   define: {
     'process.env.NODE_ENV': '"production"',
-    // Some packages check for `global`
+    'import.meta.env.DEV': 'false',
+    'import.meta.env.PROD': 'true',
+    'import.meta.env.MODE': '"extension"',
+    'import.meta.env.VITE_API_BASE': JSON.stringify(apiBase),
+    'import.meta.env.VITE_WS_URL': JSON.stringify(wsUrl),
     global: 'globalThis',
   },
 
-  // Use the React 17+ automatic JSX transform
   jsx: 'automatic',
   jsxImportSource: 'react',
 
   target: ['chrome88'],
   conditions: ['production', 'browser'],
 
-  // `chrome` is injected by the browser into content script scope
   external: ['chrome'],
 
-  // Resolve @/… aliases to src/
   alias: {
     '@': resolve(root, 'src'),
   },
@@ -42,10 +83,7 @@ await build({
   loader: {
     '.ts': 'ts',
     '.tsx': 'tsx',
-    // CSS is loaded by content.ts via a <link> pointing to assets/content.css —
-    // not via JS imports. Any CSS import encountered in the dep tree is silenced.
     '.css': 'empty',
-    // Inline small assets
     '.svg': 'dataurl',
     '.png': 'dataurl',
     '.jpg': 'dataurl',
