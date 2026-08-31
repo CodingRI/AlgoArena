@@ -17,12 +17,18 @@ const TabBar = () => {
   const { unreadCount } = useChatStore();
   const { currentRoom } = useRoomStore();
   const handCount = currentRoom?.members.filter((m) => m.hasRaisedHand).length ?? 0;
+  const pendingJoinCount = currentRoom?.pendingRequests?.filter((r) => r.status === 'pending').length ?? 0;
+
+  // Only show Chat + Members when the user is in a room
+  const visibleTabs = currentRoom
+    ? TABS
+    : TABS.filter((t) => t.id === 'room');
 
   return (
     <div className="flex items-center gap-1 px-2 py-1.5 border-b border-white/5 flex-shrink-0">
-      {TABS.map(({ id, icon: Icon, label }) => {
-        const isActive = activeTab === id;
-        const badge = id === 'chat' ? unreadCount : id === 'members' ? handCount : 0;
+      {visibleTabs.map(({ id, icon: Icon, label }) => {
+        const isActive = activeTab === id || (!currentRoom && id === 'room');
+        const badge = id === 'chat' ? unreadCount : id === 'members' ? handCount : id === 'room' ? pendingJoinCount : 0;
 
         return (
           <motion.button
