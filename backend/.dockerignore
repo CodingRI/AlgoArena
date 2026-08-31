@@ -1,0 +1,8 @@
+bin/
+*.exe
+*.test
+*.out
+vendor/
+**/*_test.go
+.git
+README.md

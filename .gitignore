@@ -4,6 +4,7 @@ node_modules
 # Go build artifacts
 backend/cmd/server/server
 backend/cmd/server/server.exe
+backend/bin/
 *.exe
 *.exe~
 *.dll
@@ -12,4 +13,9 @@ backend/cmd/server/server.exe
 *.test
 *.out
 backend/vendor/
+/dist
+/dist-dev
 .env
+.env.local
+.env.extension
+.env.production
