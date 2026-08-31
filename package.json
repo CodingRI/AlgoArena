@@ -5,11 +5,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "build:extension": "tsc && vite build --mode extension",
+    "build:extension": "tsc --noEmit && vite build --mode extension && node scripts/build-content.mjs && node -e \"const fs=require('fs'); if(fs.existsSync('dist/index.html')){fs.copyFileSync('dist/index.html','dist/popup.html'); console.log('popup.html created');}\"",
     "preview": "vite preview",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@excalidraw/excalidraw": "^0.18.1",
     "framer-motion": "^11.0.0",
     "lucide-react": "^0.363.0",
     "react": "^18.3.0",

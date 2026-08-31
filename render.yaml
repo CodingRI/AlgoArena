@@ -1,0 +1,15 @@
+
+# Health check: GET /health
+# Prefer Starter (always-on). Free tier sleeps and drops WebSocket connections.
+
+services:
+  - type: web
+    name: algoarena-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: GIN_MODE
+        value: release

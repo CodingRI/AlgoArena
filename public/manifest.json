@@ -10,7 +10,6 @@
     "128": "icons/icon128.png"
   },
   "action": {
-    "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -29,7 +28,6 @@
         "https://leetcode.cn/*"
       ],
       "js": ["content.js"],
-      "css": ["content.css"],
       "run_at": "document_idle",
       "all_frames": false
     }
@@ -44,12 +42,16 @@
   "host_permissions": [
     "https://leetcode.com/*",
     "https://www.leetcode.com/*",
-    "https://leetcode.cn/*"
+    "https://leetcode.cn/*",
+    "http://localhost:8080/*",
+    "ws://localhost:8080/*",
+    "https://*.onrender.com/*",
+    "wss://*.onrender.com/*"
   ],
   "web_accessible_resources": [
     {
       "resources": ["assets/*", "fonts/*", "icons/*"],
-      "matches": ["https://leetcode.com/*", "https://www.leetcode.com/*"]
+      "matches": ["https://leetcode.com/*", "https://www.leetcode.com/*", "https://leetcode.cn/*"]
     }
   ],
   "content_security_policy": {
