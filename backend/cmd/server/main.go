@@ -16,37 +16,48 @@ import (
 )
 
 func main() {
+	// Release mode on Render (GIN_MODE=release). Local: GIN_MODE=debug go run ...
+	if os.Getenv("GIN_MODE") != "debug" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	log.Println("Starting AlgoArena Backend...")
+	log.Println("Persistence: in-memory only — rooms are lost if this process restarts, redeploys, or sleeps.")
 
 	// 1. Initialize WebSocket Hub
 	hub := websocket.NewHub()
-	go hub.Run()
 
-	// 2. Initialize Gin router
-	r := gin.Default()
-
-	// 3. Attach CORS middleware
-	r.Use(handlers.CORSMiddleware())
-
-	// 4. Initialize Handlers
+	// 2. Initialize Handlers — this also wires hub.HandleEvent / OnConnect / OnDisconnect
 	h := handlers.NewHandler(hub)
 
-	// 5. REST API routes
+	// 3. Start hub event loop AFTER callbacks are wired to avoid any race
+	go hub.Run()
+
+	// 4. Initialize Gin router
+	r := gin.Default()
+
+	// 5. Attach CORS middleware
+	r.Use(handlers.CORSMiddleware())
+
+	// 6. REST API routes
 	api := r.Group("/api")
 	{
 		api.POST("/rooms", h.CreateRoom)
 		api.GET("/rooms/:roomId", h.GetRoomState)
 		api.POST("/rooms/:roomId/join", h.JoinRoomRequest)
+		api.DELETE("/rooms/:roomId", h.DeleteRoom)
 	}
 
-	// 6. WebSocket route
+	// 7. WebSocket route
 	r.GET("/ws", h.HandleWebSocket)
 
-	// 7. Health Check route
+	// 8. Health Check — Render healthCheckPath must be /health
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"status":    "healthy",
-			"timestamp": time.Now().Unix(),
+			"status":      "healthy",
+			"timestamp":   time.Now().Unix(),
+			"persistence": "in-memory",
+			"note":        "Rooms live only in process memory and disappear if the server restarts.",
 		})
 	})
 
@@ -61,7 +72,7 @@ func main() {
 		Handler: r,
 	}
 
-	// 8. Graceful shutdown setup
+	// 9. Graceful shutdown setup
 	go func() {
 		log.Printf("Server listening on port %s", port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
