@@ -20,11 +20,24 @@ class WebSocketService {
   public isConnected = false;
 
   connect(roomId: string, userId: string): void {
+    // Tear down any existing connection BEFORE creating a new one.
+    // Without this, the old WS's onmessage stays alive and every broadcast
+    // is processed twice (once by the old connection, once by the new one).
+    if (this.ws) {
+      const stale = this.ws;
+      stale.onopen = null;
+      stale.onmessage = null;
+      stale.onerror = null;
+      stale.onclose = null; // suppress reconnect on the stale WS
+      stale.close();
+      this.ws = null;
+    }
+    this.stopPing();
+
     this.roomId = roomId;
     this.userId = userId;
 
     try {
-      // PLACEHOLDER: Replace URL with real backend
       this.ws = new WebSocket(`${WS_CONFIG.BASE_URL}?roomId=${roomId}&userId=${userId}`);
 
       this.ws.onopen = () => {
@@ -36,11 +49,16 @@ class WebSocketService {
       };
 
       this.ws.onmessage = (event) => {
-        try {
-          const payload = JSON.parse(event.data) as SocketPayload;
-          this.handleMessage(payload);
-        } catch (e) {
-          console.error('[WS] Failed to parse message:', e);
+        // The Go WritePump may batch multiple JSON messages in one frame,
+        // separated by newlines (gorilla/websocket batching pattern).
+        const lines = (event.data as string).split('\n').filter(Boolean);
+        for (const line of lines) {
+          try {
+            const payload = JSON.parse(line) as SocketPayload;
+            this.handleMessage(payload);
+          } catch (e) {
+            console.error('[WS] Failed to parse message:', e, line);
+          }
         }
       };
 
@@ -71,8 +89,14 @@ class WebSocketService {
   }
 
   private handleMessage(payload: SocketPayload): void {
+    // For P2P events inject the sender's ID into the data object so consumers
+    // know who they are talking to without parsing the outer envelope separately.
+    let data: unknown = payload.data;
+    if (payload.event.startsWith('webrtc:') && typeof data === 'object' && data !== null) {
+      data = { ...(data as Record<string, unknown>), fromUserId: payload.senderId };
+    }
     const callbacks = this.listeners.get(payload.event) ?? [];
-    callbacks.forEach((cb) => cb(payload.data));
+    callbacks.forEach((cb) => cb(data));
   }
 
   on<T>(event: string, callback: EventCallback<T>): () => void {
@@ -91,27 +115,20 @@ class WebSocketService {
     );
   }
 
-  send<T>(event: string, data: T): void {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      // In mock/dev mode, emit locally
-      const mockPayload: SocketPayload<T> = {
-        event,
-        roomId: this.roomId ?? '',
-        data,
-        timestamp: Date.now(),
-        senderId: this.userId ?? '',
-      };
-      console.log('[WS Mock] Sending:', mockPayload);
-      return;
-    }
-
+  send<T>(event: string, data: T, targetUserId?: string): void {
     const payload: SocketPayload<T> = {
       event,
       roomId: this.roomId ?? '',
       data,
       timestamp: Date.now(),
       senderId: this.userId ?? '',
+      ...(targetUserId && { targetUserId }),
     };
+
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      console.log('[WS Mock] Sending:', payload);
+      return;
+    }
 
     this.ws.send(JSON.stringify(payload));
   }
@@ -150,11 +167,22 @@ class WebSocketService {
 
   disconnect(): void {
     this.stopPing();
-    this.ws?.close();
-    this.ws = null;
+    if (this.ws) {
+      // Null out all handlers before closing so onclose → attemptReconnect
+      // does not fire on a deliberate disconnect.
+      const ws = this.ws;
+      ws.onopen = null;
+      ws.onmessage = null;
+      ws.onerror = null;
+      ws.onclose = null;
+      ws.close();
+      this.ws = null;
+    }
     this.isConnected = false;
     this.roomId = null;
     this.userId = null;
+    // Emit disconnect so stores/hooks that listen can react
+    this.emit(SOCKET_EVENTS.DISCONNECT, {});
   }
 }
 
