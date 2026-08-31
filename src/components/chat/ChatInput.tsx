@@ -1,35 +1,73 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Code2, Mic, MicOff, X } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import { useVoiceStore } from '@/store/voiceStore';
 import { useRoomStore } from '@/store/roomStore';
+import { useTypingIndicator } from '@/hooks';
 import type { Language } from '@/types';
-import { LANGUAGES } from '@/constants';
+import { CHAT_MAX_CONTENT, LANGUAGES, SOCKET_EVENTS } from '@/constants';
+import socketService from '@/websockets/socketService';
 
 const ChatInput = () => {
+  const { sendMessage } = useChatStore();
+  const { voice, isVoiceEnabled, toggleMute, toggleVoice } = useVoiceStore();
+  const { currentUser, currentRoom } = useRoomStore();
   const [text, setText] = useState('');
   const [isCodeMode, setIsCodeMode] = useState(false);
-  const [codeLang, setCodeLang] = useState<Language>('python');
-  const { addMessage } = useChatStore();
-  const { voice, toggleMute } = useVoiceStore();
-  const { currentUser } = useRoomStore();
+  const [codeLang, setCodeLang] = useState<Language>(currentUser.language);
+  const [rateLimited, setRateLimited] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const emitTypingStart = useCallback(() => {
+    if (!currentRoom) return;
+    socketService.send(SOCKET_EVENTS.CHAT_TYPING_START, {
+      userId: currentUser.id,
+      userName: currentUser.name,
+      avatar: currentUser.avatar,
+    });
+  }, [currentRoom, currentUser]);
+
+  const emitTypingStop = useCallback(() => {
+    if (!currentRoom) return;
+    socketService.send(SOCKET_EVENTS.CHAT_TYPING_STOP, { userId: currentUser.id });
+  }, [currentRoom, currentUser.id]);
+
+  const { onInput: onTypingInput, stopImmediately } = useTypingIndicator(
+    emitTypingStart,
+    emitTypingStop
+  );
+
+  const handleMicClick = () => {
+    if (!isVoiceEnabled) {
+      toggleVoice();
+      return;
+    }
+    toggleMute();
+  };
 
   const send = () => {
     const trimmed = text.trim();
     if (!trimmed) return;
 
-    addMessage({
-      roomId: 'COLLAB-X7K2',
+    if (trimmed.length > CHAT_MAX_CONTENT) return;
+
+    stopImmediately();
+    const sent = sendMessage({
+      roomId: currentRoom?.id ?? '',
       senderId: currentUser.id,
       senderName: currentUser.name,
       senderAvatar: currentUser.avatar,
       type: isCodeMode ? 'code' : 'text',
       content: trimmed,
       language: isCodeMode ? codeLang : undefined,
-      isRead: true,
     });
+
+    if (!sent) {
+      setRateLimited(true);
+      setTimeout(() => setRateLimited(false), 1800);
+      return;
+    }
 
     setText('');
     setIsCodeMode(false);
@@ -75,7 +113,12 @@ const ChatInput = () => {
         <textarea
           ref={textareaRef}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            setText(value);
+            if (value.trim()) onTypingInput();
+            else stopImmediately();
+          }}
           onKeyDown={onKeyDown}
           placeholder={isCodeMode ? 'Paste your code...' : 'Message... (Enter to send)'}
           rows={isCodeMode ? 4 : 1}
@@ -99,11 +142,19 @@ const ChatInput = () => {
           {/* Mic toggle */}
           <motion.button
             whileTap={{ scale: 0.85 }}
-            onClick={toggleMute}
+            onClick={handleMicClick}
+            title={!isVoiceEnabled ? 'Enable voice' : voice.isMuted ? 'Unmute' : 'Mute'}
             className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors
-              ${voice.isMuted ? 'bg-red-500/20 text-red-400' : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'}`}
+              ${!isVoiceEnabled
+                ? 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
+                : voice.isMuted
+                  ? 'bg-red-500/20 text-red-400'
+                  : 'bg-emerald-500/15 text-emerald-400'
+              }`}
           >
-            {voice.isMuted ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
+            {isVoiceEnabled && !voice.isMuted
+              ? <Mic className="w-3 h-3" />
+              : <MicOff className="w-3 h-3" />}
           </motion.button>
 
           {/* Send */}
@@ -122,8 +173,12 @@ const ChatInput = () => {
         </div>
       </div>
 
-      <p className="text-[9px] text-zinc-700 text-center mt-1 font-mono">
-        {isCodeMode ? 'Shift+Enter for newline · Click send' : 'Enter to send · Shift+Enter for newline'}
+      <p className={`text-[9px] text-center mt-1 font-mono ${rateLimited ? 'text-amber-400' : 'text-zinc-700'}`}>
+        {rateLimited
+          ? 'Slow down — too many messages'
+          : isCodeMode
+            ? 'Shift+Enter for newline · Click send'
+            : 'Enter to send · Shift+Enter for newline'}
       </p>
     </div>
   );
