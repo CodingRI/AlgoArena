@@ -1,6 +1,9 @@
+import { useEffect } from 'react';
 import FloatingPanel from '@/draggable/FloatingPanel';
 import ExplanationOverlay from '@/overlays/ExplanationOverlay';
-import { useExplanationStore } from '@/store/voiceStore';
+import { useExplanationStore, useVoiceStore } from '@/store/voiceStore';
+import { useRoomStore } from '@/store/roomStore';
+import { useWebRTC } from '@/hooks/useWebRTC';
 
 // ─── Dev Preview Wrapper ──────────────────────────────────────────────────────
 // In production (Chrome Extension), FloatingPanel is injected into the
@@ -58,14 +61,32 @@ const DevPreviewBackground = () => (
   </div>
 );
 
-const App = () => {
-  const { session } = useExplanationStore();
+interface AppProps {
+  isExtension?: boolean;
+}
+
+const App = ({ isExtension = false }: AppProps) => {
+  const { session, myRole } = useExplanationStore();
+  const { isVoiceEnabled } = useVoiceStore();
+  const { initFromStorage } = useRoomStore();
+
+  // Reconnect to last active room on page refresh / extension reload
+  useEffect(() => {
+    initFromStorage();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Mount the WebRTC voice mesh (no-op when disabled)
+  useWebRTC(isVoiceEnabled);
+
+  // Show overlay when a session is active AND this user hasn't locally exited
+  const showOverlay = !!session?.isActive && myRole !== null;
 
   return (
     <>
-      <DevPreviewBackground />
+      {!isExtension && <DevPreviewBackground />}
       <FloatingPanel />
-      <ExplanationOverlay isOpen={!!session?.isActive} />
+      <ExplanationOverlay isOpen={showOverlay} />
     </>
   );
 };

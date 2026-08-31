@@ -76,3 +76,78 @@
 .layout-root {
   isolation: isolate;
 }
+
+/* Keep the drawing surface below all of its controls. The extension stylesheet
+   loads before Excalidraw's stylesheet, so interaction rules use !important to
+   remain stable inside the Shadow DOM. */
+.excalidraw-canvas-layer {
+  z-index: 0;
+  isolation: isolate;
+}
+
+.excalidraw-presenter .excalidraw,
+.excalidraw-follower .excalidraw,
+.excalidraw-presenter .excalidraw .canvas-wrapper,
+.excalidraw-follower .excalidraw .canvas-wrapper {
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+}
+
+/* Followers receive the scene but never see or interact with drawing controls. */
+.excalidraw-follower .layer-ui__wrapper,
+.excalidraw-follower .App-menu_top,
+.excalidraw-follower .App-menu_bottom,
+.excalidraw-follower .App-toolbar,
+.excalidraw-follower .ToolIcon {
+  display: none !important;
+}
+
+/* Draw mode captures strokes and keeps Excalidraw controls interactive. */
+.excalidraw-presenter.excalidraw-mode-draw,
+.excalidraw-presenter.excalidraw-mode-draw .excalidraw {
+  pointer-events: auto !important;
+}
+
+/* Excalidraw intentionally makes its full-screen UI wrapper click-through.
+   Promote the visible toolbars and property panels back to hit targets so
+   clicks cannot fall through to the drawing canvas beneath them. */
+.excalidraw-presenter.excalidraw-mode-draw .layer-ui__wrapper {
+  z-index: 20 !important;
+  pointer-events: none !important;
+}
+
+.excalidraw-presenter.excalidraw-mode-draw .layer-ui__wrapper .App-toolbar,
+.excalidraw-presenter.excalidraw-mode-draw .layer-ui__wrapper .App-menu_top,
+.excalidraw-presenter.excalidraw-mode-draw .layer-ui__wrapper .App-menu_bottom,
+.excalidraw-presenter.excalidraw-mode-draw .layer-ui__wrapper .Island,
+.excalidraw-presenter.excalidraw-mode-draw .layer-ui__wrapper .ToolIcon,
+.excalidraw-presenter.excalidraw-mode-draw .layer-ui__wrapper button,
+.excalidraw-presenter.excalidraw-mode-draw .layer-ui__wrapper input,
+.excalidraw-presenter.excalidraw-mode-draw .layer-ui__wrapper select,
+.excalidraw-presenter.excalidraw-mode-draw .layer-ui__wrapper textarea,
+.excalidraw-presenter.excalidraw-mode-draw .layer-ui__wrapper [role='button'],
+.excalidraw-presenter.excalidraw-mode-draw .layer-ui__wrapper [role='slider'],
+.excalidraw-presenter.excalidraw-mode-draw .layer-ui__wrapper [data-radix-popper-content-wrapper] {
+  pointer-events: auto !important;
+}
+
+.explanation-session-controls {
+  z-index: 30;
+}
+
+/* Page mode keeps drawings visible but makes every Excalidraw hit target inert,
+   allowing pointer input to reach LeetCode through the shadow host. */
+.excalidraw-presenter.excalidraw-mode-page,
+.excalidraw-presenter.excalidraw-mode-page * {
+  pointer-events: none !important;
+}
+
+.excalidraw-presenter.excalidraw-mode-page .layer-ui__wrapper {
+  display: none !important;
+}
+
+.excalidraw-follower,
+.excalidraw-follower * {
+  pointer-events: none !important;
+}
