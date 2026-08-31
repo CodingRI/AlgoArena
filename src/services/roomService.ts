@@ -1,66 +1,51 @@
-/**
- * Room Service — Placeholder
- * Replace with real API calls when backend is ready.
- */
-
+import { API_BASE } from '@/config/backend';
 import type { Room, JoinRequest, Language, AvatarOption } from '@/types';
-import { generateRoomId } from '@/utils';
-
-const API_BASE = 'http://localhost:8080/api'; // Replace with your backend URL
 
 export const roomService = {
   async createRoom(
     name: string,
     language: Language,
     hostId: string,
+    hostName: string,
     avatar: AvatarOption
   ): Promise<Room> {
-    // PLACEHOLDER: Replace with real API call
-    // const res = await fetch(`${API_BASE}/rooms`, {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ name, language, hostId, avatar }),
-    // });
-    // return res.json();
-
-    console.log('[RoomService] createRoom:', { name, language, hostId });
-    return Promise.resolve({
-      id: generateRoomId(),
-      name,
-      hostId,
-      members: [],
-      status: 'active',
-      language,
-      createdAt: Date.now(),
-      maxMembers: 8,
-      isLocked: false,
-      pendingRequests: [],
-      explanationSession: null,
+    const res = await fetch(`${API_BASE}/rooms`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, language, hostId, hostName, avatar }),
     });
+    if (!res.ok) throw new Error(`createRoom failed: ${res.status}`);
+    return res.json();
   },
 
-  async joinRoom(roomId: string, userId: string): Promise<JoinRequest> {
-    // PLACEHOLDER
-    console.log('[RoomService] joinRoom:', roomId, userId);
-    return Promise.resolve({
-      id: `req-${Date.now()}`,
-      userId,
-      name: 'Guest',
-      avatar: 'astronaut',
-      language: 'python',
-      requestedAt: Date.now(),
-      status: 'pending',
+  async joinRoom(
+    roomId: string,
+    userId: string,
+    name: string,
+    avatar: AvatarOption,
+    language: Language
+  ): Promise<JoinRequest> {
+    const res = await fetch(`${API_BASE}/rooms/${roomId}/join`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, name, avatar, language }),
     });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: `joinRoom failed: ${res.status}` }));
+      throw new Error((body as { error?: string }).error ?? `joinRoom failed: ${res.status}`);
+    }
+    return res.json();
   },
 
   async getRoomState(roomId: string): Promise<Room | null> {
-    // PLACEHOLDER
-    console.log('[RoomService] getRoomState:', roomId);
-    return Promise.resolve(null);
+    const res = await fetch(`${API_BASE}/rooms/${roomId}`);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(`getRoomState failed: ${res.status}`);
+    return res.json();
   },
 
-  async leaveRoom(roomId: string, userId: string): Promise<void> {
-    // PLACEHOLDER
-    console.log('[RoomService] leaveRoom:', roomId, userId);
+  async deleteRoom(roomId: string): Promise<void> {
+    const res = await fetch(`${API_BASE}/rooms/${roomId}`, { method: 'DELETE' });
+    if (!res.ok && res.status !== 404) throw new Error(`deleteRoom failed: ${res.status}`);
   },
 };

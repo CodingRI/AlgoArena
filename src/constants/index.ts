@@ -1,3 +1,4 @@
+import { WS_URL } from '@/config/backend';
 import type { AvatarConfig, AvatarOption, Language } from '@/types';
 
 // ─── SOCKET EVENT CONSTANTS ──────────────────────────────────────────────────
@@ -21,12 +22,17 @@ export const SOCKET_EVENTS = {
   JOIN_REQUEST_SEND: 'join_request:send',
   JOIN_REQUEST_ACCEPT: 'join_request:accept',
   JOIN_REQUEST_REJECT: 'join_request:reject',
+  JOIN_REQUEST_CANCEL: 'join_request:cancel',
   JOIN_REQUEST_RECEIVED: 'join_request:received',
+  JOIN_REQUEST_CANCELLED: 'join_request:cancelled',
+  ROOM_KICK: 'room:kick',
+  ROOM_KICKED: 'room:kicked',
 
   // Chat
   CHAT_MESSAGE: 'chat:message',
   CHAT_TYPING_START: 'chat:typing:start',
   CHAT_TYPING_STOP: 'chat:typing:stop',
+  CHAT_RATE_LIMITED: 'chat:rate_limited',
 
   // Voice
   VOICE_JOIN: 'voice:join',
@@ -38,12 +44,20 @@ export const SOCKET_EVENTS = {
   // Raise Hand / Explanation
   HAND_RAISE: 'hand:raise',
   HAND_LOWER: 'hand:lower',
+  HAND_DISMISS: 'hand:dismiss',       // host dismisses a member's raised hand
+  HAND_APPROVED: 'hand:approved',     // host approves a hand raise (sent only to that member)
   EXPLANATION_START: 'explanation:start',
   EXPLANATION_END: 'explanation:end',
   EXPLANATION_REQUEST_ACCEPT: 'explanation:request:accept',
   EXPLANATION_REQUEST_REJECT: 'explanation:request:reject',
   FOLLOW_PRESENTER: 'explanation:follow',
   UNFOLLOW_PRESENTER: 'explanation:unfollow',
+
+  // WebRTC signaling (P2P, always paired with targetUserId)
+  WEBRTC_OFFER: 'webrtc:offer',
+  WEBRTC_ANSWER: 'webrtc:answer',
+  WEBRTC_ICE: 'webrtc:ice-candidate',
+  WEBRTC_PEER_DISCONNECT: 'webrtc:peer-disconnect',
 
   // Canvas / Drawing
   CANVAS_UPDATE: 'canvas:update',
@@ -60,8 +74,7 @@ export type SocketEventKey = (typeof SOCKET_EVENTS)[keyof typeof SOCKET_EVENTS];
 // ─── WEBSOCKET CONFIG ────────────────────────────────────────────────────────
 
 export const WS_CONFIG = {
-  // Replace with your actual backend URL
-  BASE_URL: 'ws://localhost:8080',
+  BASE_URL: WS_URL,
   RECONNECT_INTERVAL: 3000,
   MAX_RECONNECT_ATTEMPTS: 5,
   PING_INTERVAL: 25000,
@@ -97,8 +110,13 @@ export const AVATARS: Record<AvatarOption, AvatarConfig> = {
 
 // ─── ROOM CONSTANTS ──────────────────────────────────────────────────────────
 
-export const ROOM_MAX_MEMBERS = 8;
+export const ROOM_MAX_MEMBERS = 4;
 export const ROOM_ID_LENGTH = 8;
+export const DISPLAY_NAME_MAX = 10;
+export const ROOM_NAME_MAX_WORDS = 10;
+export const CHAT_MAX_PER_WINDOW = 5;
+export const CHAT_WINDOW_MS = 5000;
+export const CHAT_MAX_CONTENT = 4000;
 
 // ─── PANEL CONSTANTS ─────────────────────────────────────────────────────────
 

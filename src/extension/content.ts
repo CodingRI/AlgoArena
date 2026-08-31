@@ -21,10 +21,9 @@ function mountExtension() {
   host.id = MOUNT_ID;
   host.style.cssText = [
     'position: fixed',
-    'top: 0',
-    'left: 0',
-    'width: 0',
-    'height: 0',
+    'inset: 0',
+    'width: 100vw',
+    'height: 100vh',
     'z-index: 2147483647',
     'pointer-events: none',
     'overflow: visible',
@@ -38,7 +37,13 @@ function mountExtension() {
   // Mount point inside shadow
   const mountPoint = document.createElement('div');
   mountPoint.id = 'collab-mount';
-  mountPoint.style.pointerEvents = 'auto';
+  mountPoint.style.cssText = [
+    'position: fixed',
+    'inset: 0',
+    'width: 100vw',
+    'height: 100vh',
+    'pointer-events: none',
+  ].join('; ');
   shadow.appendChild(mountPoint);
 
   // Inject extension fonts & styles into shadow
@@ -47,9 +52,18 @@ function mountExtension() {
   styleLink.href = chrome.runtime.getURL('assets/content.css');
   shadow.appendChild(styleLink);
 
+  const excalidrawStyleLink = document.createElement('link');
+  excalidrawStyleLink.rel = 'stylesheet';
+  excalidrawStyleLink.href = chrome.runtime.getURL('assets/excalidraw.css');
+  shadow.appendChild(excalidrawStyleLink);
+
   // Mount React app
   ReactDOM.createRoot(mountPoint).render(
-    React.createElement(React.StrictMode, null, React.createElement(App))
+    React.createElement(
+      React.StrictMode,
+      null,
+      React.createElement(App, { isExtension: true }),
+    )
   );
 
   console.log('[LeetCode Collab] Extension mounted');
