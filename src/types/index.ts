@@ -26,6 +26,7 @@ export interface Member {
   isInExplanationMode: boolean;
   hasRaisedHand: boolean;
   joinedAt: number;
+  explicitlyLeft?: boolean;
 }
 
 // ─── ROOM TYPES ─────────────────────────────────────────────────────────────
@@ -46,6 +47,14 @@ export interface Room {
   explanationSession: ExplanationSession | null;
 }
 
+export interface KnownRoom {
+  roomId: string;
+  roomName: string;
+  name: string;
+  avatar: AvatarOption;
+  language: Language;
+}
+
 export interface JoinRequest {
   id: string;
   userId: string;
@@ -54,6 +63,7 @@ export interface JoinRequest {
   language: Language;
   requestedAt: number;
   status: 'pending' | 'accepted' | 'rejected';
+  returning?: boolean;
 }
 
 // ─── CHAT TYPES ─────────────────────────────────────────────────────────────
@@ -77,6 +87,7 @@ export interface TypingIndicator {
   userId: string;
   userName: string;
   roomId: string;
+  avatar?: AvatarOption;
 }
 
 // ─── VOICE TYPES ─────────────────────────────────────────────────────────────
@@ -168,6 +179,8 @@ export interface SocketPayload<T = unknown> {
   data: T;
   timestamp: number;
   senderId: string;
+  /** When set, the backend routes this payload to that specific user only (P2P, WebRTC signaling). */
+  targetUserId?: string;
 }
 
 // ─── NOTIFICATION TYPES ──────────────────────────────────────────────────────
