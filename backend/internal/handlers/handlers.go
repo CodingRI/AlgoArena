@@ -405,6 +405,11 @@ func (h *Handler) processWSEvent(payload models.SocketPayload, client *websocket
 	case "voice:speaking":
 		h.hub.BroadcastToRoomExcept(payload, client)
 
+	case "voice:chunk":
+		// PCM fallback when P2P WebRTC cannot connect (NAT / no TURN).
+		// Never echo back to the sender — users should hear others, not themselves.
+		h.hub.BroadcastToRoomExcept(payload, client)
+
 	// ── Hand dismiss (host clears a member's raised hand) ─────────────────────
 	case "hand:dismiss":
 		h.handleHandDismiss(payload, client)
