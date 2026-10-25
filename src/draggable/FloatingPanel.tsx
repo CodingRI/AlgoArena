@@ -13,6 +13,7 @@ import RoomPanel from '@/components/room/RoomPanel';
 import SettingsModal from '@/components/settings/SettingsModal';
 import GalaxyBackground from '@/components/ui/GalaxyBackground';
 import { TOGGLE_PANEL_EVENT } from '@/constants';
+import { unlockVoiceAudio } from '@/hooks/voiceAudio';
 
 const COLLAPSED_H = 52;
 const EXPANDED_W = 360;
@@ -55,6 +56,7 @@ const FloatingPanel = () => {
         willChange: 'transform',
       }}
       className="overflow-hidden rounded-2xl select-none"
+      onPointerDown={() => unlockVoiceAudio()}
     >
       {/* Glass panel */}
       <div

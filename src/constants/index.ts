@@ -40,6 +40,7 @@ export const SOCKET_EVENTS = {
   VOICE_MUTE: 'voice:mute',
   VOICE_UNMUTE: 'voice:unmute',
   VOICE_SPEAKING: 'voice:speaking',
+  VOICE_CHUNK: 'voice:chunk',
 
   // Raise Hand / Explanation
   HAND_RAISE: 'hand:raise',
