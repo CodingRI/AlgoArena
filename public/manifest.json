@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AlgoArena",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Collaborative problem-solving on LeetCode with real-time chat, voice, and shared drawing.",
   "homepage_url": "https://github.com/CodingRI/AlgoArena",
   "icons": {
