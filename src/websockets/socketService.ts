@@ -92,7 +92,11 @@ class WebSocketService {
     // For P2P events inject the sender's ID into the data object so consumers
     // know who they are talking to without parsing the outer envelope separately.
     let data: unknown = payload.data;
-    if (payload.event.startsWith('webrtc:') && typeof data === 'object' && data !== null) {
+    if (
+      typeof data === 'object' &&
+      data !== null &&
+      (payload.event.startsWith('webrtc:') || payload.event === SOCKET_EVENTS.VOICE_CHUNK)
+    ) {
       data = { ...(data as Record<string, unknown>), fromUserId: payload.senderId };
     }
     const callbacks = this.listeners.get(payload.event) ?? [];
