@@ -19,3 +19,5 @@ backend/vendor/
 .env.local
 .env.extension
 .env.production
+.DS_Store
+*.zip
