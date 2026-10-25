@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { ExplanationSession, RaiseHandRequest, VoiceState } from '@/types';
 import { SOCKET_EVENTS } from '@/constants';
 import socketService from '@/websockets/socketService';
+import { unlockVoiceAudio } from '@/hooks/voiceAudio';
 
 interface VoiceStore {
   voice: VoiceState;
@@ -60,13 +61,16 @@ export const useVoiceStore = create<VoiceStore>((set) => ({
   },
 
   toggleVoice: () =>
-    set((state) => ({
-      isVoiceEnabled: !state.isVoiceEnabled,
-      voice: {
-        ...state.voice,
-        status: state.isVoiceEnabled ? 'disconnected' : 'connecting',
-      },
-    })),
+    set((state) => {
+      if (!state.isVoiceEnabled) unlockVoiceAudio();
+      return {
+        isVoiceEnabled: !state.isVoiceEnabled,
+        voice: {
+          ...state.voice,
+          status: state.isVoiceEnabled ? 'disconnected' : 'connecting',
+        },
+      };
+    }),
 
   setActiveSpeaker: (userId, isSpeaking) =>
     set((state) => ({

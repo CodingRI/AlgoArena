@@ -59,11 +59,7 @@ async function mountExtension() {
   ]);
 
   ReactDOM.createRoot(mountPoint).render(
-    React.createElement(
-      React.StrictMode,
-      null,
-      React.createElement(App, { isExtension: true }),
-    )
+    React.createElement(App, { isExtension: true }),
   );
 
   console.log('[AlgoArena] Extension mounted');
